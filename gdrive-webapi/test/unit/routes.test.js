@@ -79,7 +79,6 @@ describe('Routes', () => {
       expect(params.response.end).toHaveBeenCalled();
     });
 
-
     test('given method POST it should choose method route', async () => {
       const routes = new Routes();
 
@@ -96,7 +95,6 @@ describe('Routes', () => {
       expect(routes.post).toHaveBeenCalled();
     });
 
-
     test('given method GET it should choose method route', async () => {
       const routes = new Routes();
 
@@ -111,6 +109,19 @@ describe('Routes', () => {
       await routes.handler(...params.values());
 
       expect(routes.get).toHaveBeenCalled();
+    });
+  });
+
+  describe('GET', () => {
+    test.skip('given method GET it should list all files downloaded', async () => {
+      const filesStatusesMock = [
+        {
+          size: "188 kB",
+          lastModified: '2021-09-03T20:56:28.443Z',
+          owner: 'lmorais',
+          file: 'file.txt'
+        }
+      ]
     });
   });
 });
