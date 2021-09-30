@@ -4,7 +4,7 @@ export default class TestUtil {
   static generateReadableStream(data) {
     return new Readable({
       objectMode: true,
-      read() {
+      read () {
         for (const item of data) {
           this.push(item);
         }
