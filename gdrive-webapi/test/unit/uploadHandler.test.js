@@ -1,8 +1,10 @@
-import { describe, test, jest } from '@jest/globals';
+import { describe, test, jest, beforeEach } from '@jest/globals';
 import UploadHandler from '../../src/uploadHandler';
 import TestUtil from '../_util/testUtil';
 import fs from 'fs';
 import { resolve } from 'path';
+import { pipeline } from 'stream/promises';
+import { logger } from '../../src/logger';
 
 describe('Upload handler', () => {
   const defaultParams = {
@@ -26,6 +28,11 @@ describe('Upload handler', () => {
     emit: (event, message) => {}
   };
 
+  beforeEach(() => {
+    jest.spyOn(logger, 'info')
+      .mockImplementation()
+  })
+
   describe('registerEvents', () => {
     test('should call onFile and onFinish functions on busboy instance', async () => {
       const uploadHandler = new UploadHandler({
@@ -45,6 +52,7 @@ describe('Upload handler', () => {
       const busboyInstance = uploadHandler.registerEvents(headers, onFinish);
 
       const fileStream = await TestUtil.generateReadableStream(['chunk', 'of', 'data']);
+     
       busboyInstance.emit('file', 'fieldname', fileStream, 'filename.txt');
 
       busboyInstance.listeners("finish")[0].call();
@@ -88,6 +96,35 @@ describe('Upload handler', () => {
         const expectedFilename = resolve(handler.downloadsFolder, params.filename)
 
         expect(fs.createWriteStream).toHaveBeenCalledWith(expectedFilename);
+      });
+    });
+
+    describe('handleFileBytes', () => {
+      test('should call emit function and it is a transform stream', async () => {
+        jest.spyOn(ioObject, ioObject.to.name)
+        jest.spyOn(ioObject, ioObject.emit.name);
+
+        const handler = new UploadHandler({
+          io: ioObject,
+          socketId: '01'
+        });
+
+        const messages = ['hello'];
+        const source = TestUtil.generateReadableStream(messages);
+        
+        const onWrite = jest.fn();
+        const target = TestUtil.generateWritableStream(onWrite);
+      
+        await pipeline(
+          source,
+          handler.handleFileBytes("filename.txt"),
+          target
+        );
+
+        expect(ioObject.to).toHaveBeenCalledTimes(messages.length);
+        expect(ioObject.emit).toHaveBeenCalledTimes(messages.length);
+        expect(onWrite).toBeCalledTimes(messages.length);
+        expect(onWrite.mock.calls.join()).toEqual(messages.join());
       });
     });
   });
